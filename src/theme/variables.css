@@ -1,0 +1,52 @@
+/* For information on how to create your own theme, please refer to:
+http://ionicframework.com/docs/theming/ */
+:root {
+    /* SenseSnap earthy palette */
+    --ion-background-color: #F5F0E8;
+    --ion-background-color-rgb: 245, 240, 232;
+
+    --ion-text-color: #2C2416;
+    --ion-text-color-rgb: 44, 36, 22;
+
+    --ion-toolbar-background: #FDFAF5;
+    --ion-toolbar-border-color: #E2D9C8;
+    --ion-toolbar-color: #2C2416;
+
+    --ion-tab-bar-background: #FDFAF5;
+    --ion-tab-bar-border-color: #E2D9C8;
+    --ion-tab-bar-color: #A89880;
+    --ion-tab-bar-color-selected: #4A7C3F;
+
+    --ion-item-background: #FFFFFF;
+    --ion-card-background: #FFFFFF;
+    --ion-border-color: #E2D9C8;
+
+    /* Primary = earthy green */
+    --ion-color-primary: #4A7C3F;
+    --ion-color-primary-rgb: 74, 124, 63;
+    --ion-color-primary-contrast: #FFFFFF;
+    --ion-color-primary-contrast-rgb: 255, 255, 255;
+    --ion-color-primary-shade: #3A6131;
+    --ion-color-primary-tint: #5C8F51;
+
+    /* Mood colours — used in your Tab2/Tab3 inline styles */
+    --mood-calm: #4A90D9;
+    --mood-active: #7ED321;
+    --mood-overwhelmed: #9B5DE5;
+    --mood-angry: #E84040;
+    --mood-unknown: #AAAAAA;
+}
+
+ion-content {
+    --background: #F5F0E8;
+}
+
+/* Force light mode for toolbar */
+ion-toolbar {
+    --background: #FDFAF5;
+    --color: #2C2416;
+}
+
+ion-title {
+    color: #2C2416;
+}
