@@ -1,3 +1,4 @@
+// src/pages/Tab1.tsx
 import React from 'react';
 import { useHistory } from 'react-router-dom';
 import {
@@ -6,13 +7,20 @@ import {
 import { useBle } from '../context/BleContext';
 import { Mood } from '../services/BleService';
 
-const MODULE_CONFIG: Record<string, { label: string; emoji: string; color: string; desc: string }> = {
-  popit: { label: 'Pop-It Grid', emoji: '🔵', color: '#F5A623', desc: 'Pressure & tap sensing' },
-  roller: { label: 'Roller Slide', emoji: '↔️', color: '#50C8E8', desc: 'Speed & direction sensing' },
-  twistknob: { label: 'Twist Knob', emoji: '🔘', color: '#9B59B6', desc: 'Rotation & speed sensing' },
-  texturerub: { label: 'Texture Rub', emoji: '🟫', color: '#8B6914', desc: 'Touch & pressure sensing' },
-  spinner: { label: 'Spinner', emoji: '🌀', color: '#E84040', desc: 'Spin speed & duration' },
-  clicker: { label: 'Clicky Keys', emoji: '⌨️', color: '#4A7C3F', desc: 'Tap count & rhythm' },
+import djdisc from '../assets/modules/djdisc.png';
+import popit from '../assets/modules/popit.png';
+import wavepad from '../assets/modules/wavepad.png';
+import bloombox from '../assets/modules/bloombox.png';
+import pushit from '../assets/modules/pushit.png';
+import tom from '../assets/modules/tom.png';
+
+const MODULE_CONFIG: Record<string, { label: string; image: string; color: string; desc: string }> = {
+  djdisc: { label: 'DJ Disc', image: djdisc, color: '#9B59B6', desc: 'Spin & scratch sensing' },
+  popit: { label: 'Pop It', image: popit, color: '#F5A623', desc: 'Pressure & tap sensing' },
+  wavepad: { label: 'Wave Pad', image: wavepad, color: '#50C8E8', desc: 'Smooth wave sensing' },
+  bloombox: { label: 'Bloom Box', image: bloombox, color: '#E84040', desc: 'Squeeze & bloom sensing' },
+  pushit: { label: 'Push It', image: pushit, color: '#4A7C3F', desc: 'Press & push sensing' },
+  tom: { label: 'Tom', image: tom, color: '#8B6914', desc: 'Tap & drum sensing' },
 };
 
 const MOOD_CONFIG: Record<Mood, { label: string; emoji: string }> = {
@@ -37,7 +45,7 @@ const Tab1: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>Emoodu</IonTitle>
+          <IonTitle>emoodu</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent>
@@ -60,7 +68,7 @@ const Tab1: React.FC = () => {
                 fontSize: 13, fontWeight: 600,
                 color: connected ? '#4A7C3F' : '#aaa',
               }}>
-                {connected ? 'emoodu connected' : 'Not connected (Go to Connect tab)'}
+                {connected ? 'emoodu connected' : 'Not connected — go to Connect tab'}
               </span>
             </div>
             {connected && (
@@ -117,76 +125,109 @@ const Tab1: React.FC = () => {
                     borderRadius: 16, padding: '16px 12px',
                     display: 'flex', flexDirection: 'column',
                     alignItems: 'center', textAlign: 'center',
-                    transition: 'all 0.4s ease',
+                    transition: 'background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease',
                     boxShadow: !isEmpty ? `0 4px 16px ${mod!.color}44` : 'none',
-                    minHeight: 160,
+                    height: 280,
+                    width: '100%',
                     opacity: !connected ? 0.4 : 1,
                     cursor: tappable ? 'pointer' : 'default',
+                    overflow: 'hidden',
                   }}
                 >
                   {/* Slot number */}
                   <p style={{
                     fontSize: 9, fontWeight: 700,
                     color: !isEmpty ? 'rgba(255,255,255,0.6)' : '#ccc',
-                    letterSpacing: 0.8, margin: '0 0 4px',
+                    letterSpacing: 0.8, margin: '0 0 8px',
                     textTransform: 'uppercase',
+                    height: 14, flexShrink: 0,
                   }}>
                     Slot {i + 1}
                   </p>
 
-                  {isEmpty ? (
-                    <>
+                  {/* Fixed image area */}
+                  <div style={{
+                    width: 100, height: 100,
+                    flexShrink: 0, marginBottom: 8,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    borderRadius: 12,
+                    backgroundColor: !isEmpty ? 'rgba(255,255,255,0.2)' : '#f0f0f0',
+                  }}>
+                    {!isEmpty && mod ? (
+                      <img
+                        src={mod.image}
+                        alt={mod.label}
+                        style={{
+                          width: 88, height: 88,
+                          objectFit: 'contain',
+                          borderRadius: 10,
+                        }}
+                      />
+                    ) : (
                       <div style={{
-                        width: 36, height: 36, borderRadius: '50%',
-                        backgroundColor: '#f0f0f0', marginBottom: 8,
+                        width: 88, height: 88,
+                        borderRadius: 10,
+                        backgroundColor: '#e8e8e8',
                       }} />
-                      <div style={{
-                        width: 60, height: 10, borderRadius: 4,
-                        backgroundColor: '#f0f0f0', marginBottom: 6,
-                      }} />
-                      <p style={{ fontSize: 11, color: '#ccc', margin: 0 }}>
-                        No module
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <span style={{ fontSize: 28, marginBottom: 4 }}>
-                        {mod!.emoji}
-                      </span>
-                      <span style={{
-                        fontSize: 12, fontWeight: 700,
-                        color: 'white', marginBottom: 8,
-                      }}>
+                    )}
+                  </div>
+
+                  {/* Fixed label area */}
+                  <div style={{ height: 18, flexShrink: 0, marginBottom: 6 }}>
+                    {!isEmpty ? (
+                      <span style={{ fontSize: 12, fontWeight: 700, color: 'white' }}>
                         {mod!.label}
                       </span>
+                    ) : (
                       <div style={{
-                        backgroundColor: 'rgba(255,255,255,0.2)',
-                        borderRadius: 12, padding: '8px 10px', width: '100%',
-                      }}>
+                        width: 60, height: 10, borderRadius: 4,
+                        backgroundColor: '#f0f0f0', margin: '0 auto',
+                      }} />
+                    )}
+                  </div>
+
+                  {/* Fixed emotion area */}
+                  <div style={{
+                    width: '100%', flexShrink: 0,
+                    backgroundColor: !isEmpty ? 'rgba(255,255,255,0.2)' : '#f5f5f5',
+                    borderRadius: 10, padding: '6px 8px',
+                    minHeight: 52,
+                    display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    {!isEmpty ? (
+                      <>
                         <p style={{
                           fontSize: 9, color: 'rgba(255,255,255,0.7)',
-                          margin: '0 0 4px', letterSpacing: 0.8,
+                          margin: '0 0 2px', letterSpacing: 0.8,
                           textTransform: 'uppercase',
                         }}>
                           Emotion
                         </p>
-                        <span style={{ fontSize: 24 }}>{mood.emoji}</span>
+                        <span style={{ fontSize: 20 }}>{mood.emoji}</span>
                         <p style={{
-                          fontSize: 11, fontWeight: 700,
-                          color: 'white', margin: '2px 0 0',
+                          fontSize: 10, fontWeight: 700,
+                          color: 'white', margin: '1px 0 0',
                         }}>
                           {mood.label}
                         </p>
-                      </div>
+                      </>
 
-                      {/* Tap hint */}
-                      <p style={{
-                        fontSize: 9, color: 'rgba(255,255,255,0.5)',
-                        margin: '8px 0 0',
-                      }}>
-                        Tap for details →
+                    ) : (
+                      <p style={{ fontSize: 11, color: '#ccc', margin: 0 }}>
+                        No module
                       </p>
-                    </>
+                    )}
+                  </div>
+
+                  {/* Tap hint */}
+                  {!isEmpty && (
+                    <p style={{
+                      fontSize: 9, color: 'rgba(255,255,255,0.5)',
+                      margin: '6px 0 0', flexShrink: 0,
+                    }}>
+                      Tap for details →
+                    </p>
                   )}
                 </div>
               );
@@ -207,3 +248,4 @@ const Tab1: React.FC = () => {
 };
 
 export default Tab1;
+

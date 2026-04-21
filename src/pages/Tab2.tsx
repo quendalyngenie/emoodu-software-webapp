@@ -1,15 +1,22 @@
+// src/pages/Tab2.tsx
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
-  IonButton, IonBadge, IonSpinner, IonList,
-  IonItem, IonLabel, IonText, IonBackButton,
-  IonButtons, useIonToast
+  IonButton, IonBadge, IonSpinner, IonList, IonItem,
+  IonLabel, IonText, IonBackButton, IonButtons, useIonToast
 } from '@ionic/react';
 import { Capacitor } from '@capacitor/core';
 import { ScanResult } from '@capacitor-community/bluetooth-le';
 import { useBle } from '../context/BleContext';
-import { Mood, BleService } from '../services/BleService';
+import { Mood, BleService, getInsight } from '../services/BleService';
+
+import djdisc from '../assets/modules/djdisc.png';
+import popit from '../assets/modules/popit.png';
+import wavepad from '../assets/modules/wavepad.png';
+import bloombox from '../assets/modules/bloombox.png';
+import pushit from '../assets/modules/pushit.png';
+import tom from '../assets/modules/tom.png';
 
 const MOOD_CONFIG: Record<Mood, { label: string; color: string; emoji: string; description: string }> = {
   calm: { label: 'Calm', color: '#4A90D9', emoji: '😌', description: 'Child is relaxed and regulated.' },
@@ -19,13 +26,13 @@ const MOOD_CONFIG: Record<Mood, { label: string; color: string; emoji: string; d
   unknown: { label: '—', color: '#AAAAAA', emoji: '❓', description: 'No data received yet.' },
 };
 
-const MODULE_CONFIG: Record<string, { label: string; emoji: string; color: string }> = {
-  popit: { label: 'Pop-It Grid', emoji: '🔵', color: '#F5A623' },
-  roller: { label: 'Roller Slide', emoji: '↔️', color: '#50C8E8' },
-  twistknob: { label: 'Twist Knob', emoji: '🔘', color: '#9B59B6' },
-  texturerub: { label: 'Texture Rub', emoji: '🟫', color: '#8B6914' },
-  spinner: { label: 'Spinner', emoji: '🌀', color: '#E84040' },
-  clicker: { label: 'Clicky Keys', emoji: '⌨️', color: '#4A7C3F' },
+const MODULE_CONFIG: Record<string, { label: string; image: string; color: string; desc: string }> = {
+  djdisc: { label: 'DJ Disc', image: djdisc, color: '#9B59B6', desc: 'Spin & scratch sensing' },
+  popit: { label: 'Pop It', image: popit, color: '#F5A623', desc: 'Pressure & tap sensing' },
+  wavepad: { label: 'Wave Pad', image: wavepad, color: '#50C8E8', desc: 'Smooth wave sensing' },
+  bloombox: { label: 'Bloom Box', image: bloombox, color: '#E84040', desc: 'Squeeze & bloom sensing' },
+  pushit: { label: 'Push It', image: pushit, color: '#4A7C3F', desc: 'Press & push sensing' },
+  tom: { label: 'Tom', image: tom, color: '#8B6914', desc: 'Tap & drum sensing' },
 };
 
 const IS_NATIVE = Capacitor.isNativePlatform();
@@ -42,12 +49,9 @@ const Tab2: React.FC = () => {
 
   const batteryColor = battery > 50 ? '#7ED321' : battery > 20 ? '#F5A623' : '#E84040';
 
-  // If moduleKey in URL — show that specific slot
-  // Otherwise show first active slot
   const targetSlot = moduleKey
     ? slots.find(s => s.module === moduleKey)
     : slots.find(s => s.module !== null);
-
   const moodConfig = MOOD_CONFIG[targetSlot?.mood ?? 'unknown'];
   const moduleConfig = targetSlot?.module ? MODULE_CONFIG[targetSlot.module] : null;
 
@@ -101,17 +105,13 @@ const Tab2: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          {/* Show back button when navigated from Tab1 */}
           {moduleKey && (
             <IonButtons slot="start">
               <IonBackButton defaultHref="/tab1" />
             </IonButtons>
           )}
           <IonTitle>
-            {moduleKey && moduleConfig
-              ? moduleConfig.label
-              : 'Connect'
-            }
+            {moduleKey && moduleConfig ? moduleConfig.label : 'Connect & Mood'}
           </IonTitle>
         </IonToolbar>
       </IonHeader>
@@ -131,7 +131,7 @@ const Tab2: React.FC = () => {
                 fontSize: 11, fontWeight: 600, color: '#A89880',
                 letterSpacing: 0.8, textTransform: 'uppercase', margin: 0,
               }}>
-                Device (make sure emoodu is powered on and nearby)
+                Device
               </p>
               {connected && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -202,7 +202,7 @@ const Tab2: React.FC = () => {
 
                 {scanning && devices.length === 0 && (
                   <p style={{ color: '#aaa', fontSize: 12, marginTop: 12 }}>
-                    Looking for Emoodu...
+                    Looking for emoodu...
                   </p>
                 )}
               </div>
@@ -227,14 +227,14 @@ const Tab2: React.FC = () => {
               {/* Two widgets */}
               <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
 
-                {/* Emotion */}
+                {/* Emotion widget */}
                 <div style={{
                   flex: 1, backgroundColor: moodConfig.color,
                   borderRadius: 20, padding: '16px 10px',
                   display: 'flex', flexDirection: 'column',
                   alignItems: 'center', justifyContent: 'center',
                   boxShadow: `0 4px 16px ${moodConfig.color}44`,
-                  transition: 'all 0.6s ease', minHeight: 160,
+                  transition: 'all 0.6s ease', minHeight: 180,
                 }}>
                   <p style={{
                     fontSize: 10, color: 'rgba(255,255,255,0.7)',
@@ -242,7 +242,7 @@ const Tab2: React.FC = () => {
                   }}>
                     Emotion
                   </p>
-                  <span style={{ fontSize: 40 }}>{moodConfig.emoji}</span>
+                  <span style={{ fontSize: 44 }}>{moodConfig.emoji}</span>
                   <span style={{
                     color: 'white', fontWeight: 700,
                     fontSize: 15, marginTop: 8, textAlign: 'center',
@@ -257,7 +257,7 @@ const Tab2: React.FC = () => {
                   </span>
                 </div>
 
-                {/* Fidget */}
+                {/* Fidget widget */}
                 <div style={{
                   flex: 1,
                   backgroundColor: moduleConfig ? moduleConfig.color : '#AAAAAA',
@@ -265,7 +265,7 @@ const Tab2: React.FC = () => {
                   display: 'flex', flexDirection: 'column',
                   alignItems: 'center', justifyContent: 'center',
                   boxShadow: moduleConfig ? `0 4px 16px ${moduleConfig.color}44` : 'none',
-                  transition: 'all 0.6s ease', minHeight: 160,
+                  transition: 'all 0.6s ease', minHeight: 180,
                 }}>
                   <p style={{
                     fontSize: 10, color: 'rgba(255,255,255,0.7)',
@@ -273,9 +273,22 @@ const Tab2: React.FC = () => {
                   }}>
                     Fidget
                   </p>
-                  <span style={{ fontSize: 40 }}>
-                    {moduleConfig ? moduleConfig.emoji : '❓'}
-                  </span>
+                  {moduleConfig ? (
+                    <img
+                      src={moduleConfig.image}
+                      alt={moduleConfig.label}
+                      style={{
+                        width: 80, height: 80,
+                        objectFit: 'contain',
+                        borderRadius: 12,
+                        backgroundColor: 'rgba(255,255,255,0.2)',
+                        padding: 6,
+                        marginBottom: 4,
+                      }}
+                    />
+                  ) : (
+                    <span style={{ fontSize: 44 }}>❓</span>
+                  )}
                   <span style={{
                     color: 'white', fontWeight: 700,
                     fontSize: 15, marginTop: 8, textAlign: 'center',
@@ -286,7 +299,7 @@ const Tab2: React.FC = () => {
                     color: 'rgba(255,255,255,0.8)',
                     fontSize: 10, marginTop: 4, textAlign: 'center',
                   }}>
-                    {targetSlot?.module ? 'Active module' : 'No module'}
+                    {moduleConfig ? moduleConfig.desc : 'No module'}
                   </span>
                 </div>
               </div>
@@ -299,14 +312,11 @@ const Tab2: React.FC = () => {
                   color: '#444', lineHeight: 1.6, marginBottom: 16,
                   borderLeft: `4px solid ${moodConfig.color}`,
                 }}>
-                  💬 {targetSlot.mood === 'calm' && 'Slow, steady interaction — calm and regulated'}
-                  {targetSlot.mood === 'active' && 'Moderate activity — alert and energised'}
-                  {targetSlot.mood === 'overstimulated' && 'High activity detected — possibly overstimulated'}
-                  {targetSlot.mood === 'selfregulating' && 'Intense interaction — child is self regulating'}
+                  💬 {getInsight(targetSlot.mood)}
                 </div>
               )}
 
-              {/* Other slots — only show when not filtering by module */}
+              {/* All slots — only when not filtering by module */}
               {!moduleKey && (
                 <>
                   <p style={{
@@ -326,9 +336,19 @@ const Tab2: React.FC = () => {
                           backgroundColor: '#f8f8f8', borderRadius: 12,
                           opacity: slot.module === null ? 0.4 : 1,
                         }}>
-                          <span style={{ fontSize: 20 }}>
-                            {mod ? mod.emoji : '○'}
-                          </span>
+                          {mod ? (
+                            <img
+                              src={mod.image}
+                              alt={mod.label}
+                              style={{
+                                width: 36, height: 36,
+                                objectFit: 'contain',
+                                borderRadius: 8,
+                              }}
+                            />
+                          ) : (
+                            <span style={{ fontSize: 20 }}>○</span>
+                          )}
                           <div style={{ flex: 1 }}>
                             <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#2C2416' }}>
                               {mod ? mod.label : 'Empty'}
@@ -361,5 +381,4 @@ const Tab2: React.FC = () => {
 };
 
 export default Tab2;
-
 

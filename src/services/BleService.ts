@@ -1,3 +1,4 @@
+// src/services/BleService.ts
 import { BleClient, ScanResult } from '@capacitor-community/bluetooth-le';
 import { Capacitor } from '@capacitor/core';
 
@@ -5,7 +6,7 @@ export const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
 export const CHAR_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
 
 export type Mood = 'calm' | 'active' | 'overstimulated' | 'selfregulating' | 'unknown';
-export type ModuleType = 'popit' | 'roller' | 'twistknob' | 'texturerub' | 'spinner' | 'clicker';
+export type ModuleType = 'djdisc' | 'popit' | 'wavepad' | 'bloombox' | 'pushit' | 'tom';
 
 export interface SlotData {
     id: number;
@@ -15,14 +16,6 @@ export interface SlotData {
 export interface DevicePayload {
     battery: number;
     modules: SlotData[];
-}
-
-export interface MoodResult {
-    mood: Mood;
-    module: ModuleType;
-    insight: string;
-    battery: number;
-    raw: any;
 }
 
 export interface SensorPayload {
@@ -62,12 +55,12 @@ export function moodFromCode(code: number): Mood {
 
 export function moduleFromCode(code: number): ModuleType | null {
     switch (code) {
-        case 1: return 'twistknob';
-        case 2: return 'roller';
-        case 3: return 'popit';
-        case 4: return 'texturerub';
-        case 5: return 'spinner';
-        case 6: return 'clicker';
+        case 1: return 'djdisc';
+        case 2: return 'popit';
+        case 3: return 'wavepad';
+        case 4: return 'bloombox';
+        case 5: return 'pushit';
+        case 6: return 'tom';
         default: return null; // 0 = empty
     }
 }
@@ -82,12 +75,10 @@ export function parseDevicePayload(raw: DataView): DevicePayload | null {
     }
 }
 
-// ── Web Bluetooth state ───────────────────────────────────
 let webDevice: any = null;
 let webChar: any = null;
 
 export const BleService = {
-
     async initialize() {
         if (Capacitor.isNativePlatform()) {
             await BleClient.initialize({ androidNeverForLocation: true });
@@ -160,5 +151,3 @@ export const BleService = {
         }
     },
 };
-
-

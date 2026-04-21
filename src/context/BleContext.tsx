@@ -1,11 +1,11 @@
 // src/context/BleContext.tsx
-import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
 import {
     BleService, Mood, ModuleType, DevicePayload,
     moodFromCode, moduleFromCode, getInsight,
 } from '../services/BleService';
-import { useEffect } from 'react'; // add to imports above
+
 export interface SlotEntry {
     moduleId: number;
     module: ModuleType | null;
@@ -48,22 +48,48 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const [history, setHistory] = useState<MoodEntry[]>([]);
     const deviceIdRef = useRef<string | null>(null);
 
-    // ── TEST SIMULATION (uncomment to enable browser testing) ──
-    //
+    // ── Process incoming payload ─────────────────────────────
+    const processPayload = useCallback((payload: DevicePayload) => {
+        setBattery(payload.battery);
+        const newSlots: SlotEntry[] = payload.modules.map(s => ({
+            moduleId: s.id,
+            module: moduleFromCode(s.id),
+            mood: s.id === 0 ? 'unknown' : moodFromCode(s.state),
+        }));
+        setSlots(newSlots);
+        newSlots.forEach(slot => {
+            if (slot.module !== null && slot.mood !== 'unknown') {
+                setHistory(prev => [{
+                    mood: slot.mood,
+                    module: slot.module!,
+                    insight: getInsight(slot.mood),
+                    timestamp: new Date(),
+                }, ...prev].slice(0, 200));
+            }
+        });
+    }, []);
 
+    // ── TEST SIMULATION ──────────────────────────────────────
+    // To disable: comment out this entire useEffect block
     // useEffect(() => {
     //     if (Capacitor.isNativePlatform()) return;
 
     //     const testPayloads: DevicePayload[] = [
+    //         // Slot 1: DJ Disc calm, Slot 2: Pop It active, Slot 3: Wave Pad calm, Slot 4: empty
     //         { battery: 80, modules: [{ id: 1, state: 0 }, { id: 2, state: 1 }, { id: 3, state: 0 }, { id: 0, state: 0 }] },
+    //         // Slot 1: DJ Disc active, Slot 2: Pop It overstimulated, Slot 3: Wave Pad calm, Slot 4: empty
     //         { battery: 79, modules: [{ id: 1, state: 1 }, { id: 2, state: 2 }, { id: 3, state: 0 }, { id: 0, state: 0 }] },
+    //         // Slot 1: DJ Disc calm, Slot 2: Pop It selfregulating, Slot 3: Wave Pad active, Slot 4: Bloom Box calm
     //         { battery: 78, modules: [{ id: 1, state: 0 }, { id: 2, state: 3 }, { id: 3, state: 1 }, { id: 4, state: 0 }] },
+    //         // Slot 1: DJ Disc overstimulated, Slot 2: Pop It calm, Slot 3: Wave Pad calm, Slot 4: Bloom Box active
     //         { battery: 77, modules: [{ id: 1, state: 2 }, { id: 2, state: 0 }, { id: 3, state: 0 }, { id: 4, state: 1 }] },
+    //         // Slot 1: DJ Disc calm, Slot 2: Pop It active, Slot 3: empty, Slot 4: empty
     //         { battery: 76, modules: [{ id: 1, state: 0 }, { id: 2, state: 1 }, { id: 0, state: 0 }, { id: 0, state: 0 }] },
+    //         // Slot 1: DJ Disc selfregulating, Slot 2: Pop It calm, Slot 3: Push It active, Slot 4: Tom overstimulated
     //         { battery: 75, modules: [{ id: 1, state: 3 }, { id: 2, state: 0 }, { id: 5, state: 1 }, { id: 6, state: 2 }] },
     //     ];
 
-    //     // Module IDs: 0=empty, 1=twistknob, 2=roller, 3=popit, 4=texturerub, 5=spinner, 6=clicker
+    //     // Module IDs: 0=empty, 1=djdisc, 2=popit, 3=wavepad, 4=bloombox, 5=pushit, 6=tom
     //     // Mood codes: 0=calm, 1=active, 2=overstimulated, 3=selfregulating
 
     //     let idx = 0;
@@ -77,33 +103,8 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     //     }, 3000);
 
     //     return () => clearInterval(interval);
-    // }, []);
-
-    // ── END TEST SIMULATION ─────────────────────────────────────
-
-    // ── Process incoming payload ─────────────────────────────
-    const processPayload = useCallback((payload: DevicePayload) => {
-        setBattery(payload.battery);
-
-        const newSlots: SlotEntry[] = payload.modules.map(s => ({
-            moduleId: s.id,
-            module: moduleFromCode(s.id),
-            mood: s.id === 0 ? 'unknown' : moodFromCode(s.state),
-        }));
-
-        setSlots(newSlots);
-
-        newSlots.forEach(slot => {
-            if (slot.module !== null && slot.mood !== 'unknown') {
-                setHistory(prev => [{
-                    mood: slot.mood,
-                    module: slot.module!,
-                    insight: getInsight(slot.mood),
-                    timestamp: new Date(),
-                }, ...prev].slice(0, 200));
-            }
-        });
-    }, []);
+    // }, [processPayload]);
+    // ── END TEST SIMULATION ───────────────────────────────────
 
     // ── Connect ──────────────────────────────────────────────
     const connect = useCallback(async (id: string, name: string) => {
@@ -116,19 +117,14 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         if (Capacitor.isNativePlatform()) {
             await BleService.connect(id, onDisconnect);
-
-            // Native — inline handler to avoid stale closure
             await BleService.startNotify(id, (payload: DevicePayload) => {
                 setBattery(payload.battery);
-
                 const newSlots: SlotEntry[] = payload.modules.map(s => ({
                     moduleId: s.id,
                     module: moduleFromCode(s.id),
                     mood: s.id === 0 ? 'unknown' : moodFromCode(s.state),
                 }));
-
                 setSlots(newSlots);
-
                 newSlots.forEach(slot => {
                     if (slot.module !== null && slot.mood !== 'unknown') {
                         setHistory(prev => [{
@@ -140,13 +136,10 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                     }
                 });
             });
-
             deviceIdRef.current = id;
             setDeviceId(id);
             setDeviceName(name);
-
         } else {
-            // Web Bluetooth
             const device = await BleService.connect(id, onDisconnect, processPayload);
             deviceIdRef.current = device.id ?? id;
             setDeviceId(device.id ?? id);
