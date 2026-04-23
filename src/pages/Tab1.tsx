@@ -13,6 +13,23 @@ import wavepad from '../assets/modules/wavepad.png';
 import bloombox from '../assets/modules/bloombox.png';
 import pushit from '../assets/modules/pushit.png';
 import tom from '../assets/modules/tom.png';
+import george from '../assets/modules/george.png';
+import mabel from '../assets/modules/mabel.png';
+
+// Tom GIFs
+import tomActive from '../assets/modules/tom-active.gif';
+import tomOverstimulated from '../assets/modules/tom-overstimulated.gif';
+import tomSelfregulating from '../assets/modules/tom-selfregulating.gif';
+
+// George GIFs
+import georgeActive from '../assets/modules/george-active.gif';
+import georgeOverstimulated from '../assets/modules/george-overstimulated.gif';
+import georgeSelfregulating from '../assets/modules/george-selfregulating.gif';
+
+// Mabel GIFs
+import mabelActive from '../assets/modules/mabel-active.gif';
+import mabelOverstimulated from '../assets/modules/mabel-overstimulated.gif';
+import mabelSelfregulating from '../assets/modules/mabel-selfregulating.gif';
 
 const MODULE_CONFIG: Record<string, { label: string; image: string; color: string; desc: string }> = {
   djdisc: { label: 'DJ Disc', image: djdisc, color: '#9B59B6', desc: 'Spin & scratch sensing' },
@@ -21,6 +38,8 @@ const MODULE_CONFIG: Record<string, { label: string; image: string; color: strin
   bloombox: { label: 'Bloom Box', image: bloombox, color: '#E84040', desc: 'Squeeze & bloom sensing' },
   pushit: { label: 'Push It', image: pushit, color: '#4A7C3F', desc: 'Press & push sensing' },
   tom: { label: 'Tom', image: tom, color: '#8B6914', desc: 'Tap & drum sensing' },
+  george: { label: 'George', image: george, color: '#2A5F8A', desc: 'Grip & squeeze sensing' },
+  mabel: { label: 'Mabel', image: mabel, color: '#C0392B', desc: 'Twist & turn sensing' },
 };
 
 const MOOD_CONFIG: Record<Mood, { label: string; emoji: string }> = {
@@ -29,6 +48,32 @@ const MOOD_CONFIG: Record<Mood, { label: string; emoji: string }> = {
   overstimulated: { label: 'Overstimulated', emoji: '🤯' },
   selfregulating: { label: 'Self Regulating', emoji: '🔄' },
   unknown: { label: '—', emoji: '❓' },
+};
+
+// GIFs per module per mood — calm falls back to static image
+const MODULE_GIFS: Partial<Record<string, Partial<Record<Mood, string>>>> = {
+  tom: {
+    active: tomActive,
+    overstimulated: tomOverstimulated,
+    selfregulating: tomSelfregulating,
+  },
+  george: {
+    active: georgeActive,
+    overstimulated: georgeOverstimulated,
+    selfregulating: georgeSelfregulating,
+  },
+  mabel: {
+    active: mabelActive,
+    overstimulated: mabelOverstimulated,
+    selfregulating: mabelSelfregulating,
+  },
+};
+
+// Get right image — animated GIF if available, else static
+const getModuleImage = (moduleKey: string, mood: Mood): string => {
+  const gif = MODULE_GIFS[moduleKey]?.[mood];
+  if (gif) return gif;
+  return MODULE_CONFIG[moduleKey]?.image ?? '';
 };
 
 const Tab1: React.FC = () => {
@@ -45,7 +90,7 @@ const Tab1: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>emoodu</IonTitle>
+          <IonTitle>Emoodu</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent>
@@ -114,6 +159,9 @@ const Tab1: React.FC = () => {
               const mod = slot.module ? MODULE_CONFIG[slot.module] : null;
               const mood = MOOD_CONFIG[slot.mood] ?? MOOD_CONFIG['unknown'];
               const tappable = connected && slot.module !== null;
+              const imgSrc = slot.module
+                ? getModuleImage(slot.module, slot.mood)
+                : null;
 
               return (
                 <div
@@ -122,19 +170,17 @@ const Tab1: React.FC = () => {
                   style={{
                     backgroundColor: !isEmpty ? mod!.color : '#FFFFFF',
                     border: `1.5px solid ${!isEmpty ? mod!.color : '#E2D9C8'}`,
-                    borderRadius: 16, padding: '16px 12px',
+                    borderRadius: 16, padding: '16px 12px 20px',
                     display: 'flex', flexDirection: 'column',
                     alignItems: 'center', textAlign: 'center',
                     transition: 'background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease',
                     boxShadow: !isEmpty ? `0 4px 16px ${mod!.color}44` : 'none',
-                    height: 280,
-                    width: '100%',
+                    height: 280, width: '100%',
                     opacity: !connected ? 0.4 : 1,
                     cursor: tappable ? 'pointer' : 'default',
                     overflow: 'hidden',
                   }}
                 >
-                  {/* Slot number */}
                   <p style={{
                     fontSize: 9, fontWeight: 700,
                     color: !isEmpty ? 'rgba(255,255,255,0.6)' : '#ccc',
@@ -145,7 +191,6 @@ const Tab1: React.FC = () => {
                     Slot {i + 1}
                   </p>
 
-                  {/* Fixed image area */}
                   <div style={{
                     width: 100, height: 100,
                     flexShrink: 0, marginBottom: 8,
@@ -153,26 +198,17 @@ const Tab1: React.FC = () => {
                     borderRadius: 12,
                     backgroundColor: !isEmpty ? 'rgba(255,255,255,0.2)' : '#f0f0f0',
                   }}>
-                    {!isEmpty && mod ? (
+                    {!isEmpty && imgSrc ? (
                       <img
-                        src={mod.image}
-                        alt={mod.label}
-                        style={{
-                          width: 88, height: 88,
-                          objectFit: 'contain',
-                          borderRadius: 10,
-                        }}
+                        src={imgSrc}
+                        alt={mod!.label}
+                        style={{ width: 88, height: 88, objectFit: 'contain', borderRadius: 10 }}
                       />
                     ) : (
-                      <div style={{
-                        width: 88, height: 88,
-                        borderRadius: 10,
-                        backgroundColor: '#e8e8e8',
-                      }} />
+                      <div style={{ width: 88, height: 88, borderRadius: 10, backgroundColor: '#e8e8e8' }} />
                     )}
                   </div>
 
-                  {/* Fixed label area */}
                   <div style={{ height: 18, flexShrink: 0, marginBottom: 6 }}>
                     {!isEmpty ? (
                       <span style={{ fontSize: 12, fontWeight: 700, color: 'white' }}>
@@ -186,41 +222,42 @@ const Tab1: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Fixed emotion area */}
                   <div style={{
                     width: '100%', flexShrink: 0,
-                    backgroundColor: !isEmpty ? 'rgba(255,255,255,0.2)' : '#f5f5f5',
-                    borderRadius: 10, padding: '6px 8px',
+                    backgroundColor: !isEmpty ? 'rgba(255,255,255,0.15)' : '#f5f5f5',
+                    borderRadius: 10, padding: '8px 10px',
                     minHeight: 52,
-                    display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', justifyContent: 'center',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    border: !isEmpty ? '1px solid rgba(255,255,255,0.25)' : 'none',
                   }}>
                     {!isEmpty ? (
-                      <>
-                        <p style={{
-                          fontSize: 9, color: 'rgba(255,255,255,0.7)',
-                          margin: '0 0 2px', letterSpacing: 0.8,
-                          textTransform: 'uppercase',
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{
+                          width: 36, height: 36, borderRadius: '50%',
+                          backgroundColor: 'rgba(255,255,255,0.25)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 20, flexShrink: 0,
                         }}>
-                          Emotion
-                        </p>
-                        <span style={{ fontSize: 20 }}>{mood.emoji}</span>
-                        <p style={{
-                          fontSize: 10, fontWeight: 700,
-                          color: 'white', margin: '1px 0 0',
-                        }}>
-                          {mood.label}
-                        </p>
-                      </>
-
+                          {mood.emoji}
+                        </div>
+                        <div style={{ textAlign: 'left' }}>
+                          <p style={{
+                            fontSize: 8, color: 'rgba(255,255,255,0.65)',
+                            margin: '0 0 1px', letterSpacing: 0.8,
+                            textTransform: 'uppercase',
+                          }}>
+                            Emotion
+                          </p>
+                          <p style={{ fontSize: 12, fontWeight: 700, color: 'white', margin: 0 }}>
+                            {mood.label}
+                          </p>
+                        </div>
+                      </div>
                     ) : (
-                      <p style={{ fontSize: 11, color: '#ccc', margin: 0 }}>
-                        No module
-                      </p>
+                      <p style={{ fontSize: 11, color: '#ccc', margin: 0 }}>No module</p>
                     )}
                   </div>
 
-                  {/* Tap hint */}
                   {!isEmpty && (
                     <p style={{
                       fontSize: 9, color: 'rgba(255,255,255,0.5)',
@@ -238,7 +275,7 @@ const Tab1: React.FC = () => {
             fontSize: 11, color: '#A89880',
             textAlign: 'center', marginTop: 20, lineHeight: 1.5,
           }}>
-            Physically swap modules · 6 available
+            Physically swap modules · 8 available
           </p>
 
         </div>
@@ -248,4 +285,3 @@ const Tab1: React.FC = () => {
 };
 
 export default Tab1;
-

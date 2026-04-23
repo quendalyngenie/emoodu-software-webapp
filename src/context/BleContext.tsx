@@ -25,6 +25,7 @@ interface BleContextType {
     deviceName: string | null;
     slots: SlotEntry[];
     battery: number;
+    djSpeed: number;
     history: MoodEntry[];
     connect: (deviceId: string, name: string) => Promise<void>;
     disconnect: () => Promise<void>;
@@ -45,18 +46,27 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const [deviceName, setDeviceName] = useState<string | null>(null);
     const [slots, setSlots] = useState<SlotEntry[]>(EMPTY_SLOTS);
     const [battery, setBattery] = useState<number>(0);
+    const [djSpeed, setDjSpeed] = useState<number>(1);
     const [history, setHistory] = useState<MoodEntry[]>([]);
     const deviceIdRef = useRef<string | null>(null);
 
     // ── Process incoming payload ─────────────────────────────
     const processPayload = useCallback((payload: DevicePayload) => {
         setBattery(payload.battery);
+
         const newSlots: SlotEntry[] = payload.modules.map(s => ({
             moduleId: s.id,
             module: moduleFromCode(s.id),
             mood: s.id === 0 ? 'unknown' : moodFromCode(s.state),
         }));
+
         setSlots(newSlots);
+
+        const djIndex = payload.modules.findIndex(s => s.id === 1);
+        if (djIndex !== -1 && payload.modules[djIndex].speed !== undefined) {
+            setDjSpeed(payload.modules[djIndex].speed!);
+        }
+
         newSlots.forEach(slot => {
             if (slot.module !== null && slot.mood !== 'unknown') {
                 setHistory(prev => [{
@@ -70,27 +80,29 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }, []);
 
     // ── TEST SIMULATION ──────────────────────────────────────
-    // To disable: comment out this entire useEffect block
+    // To disable: comment out this useEffect block
     // useEffect(() => {
     //     if (Capacitor.isNativePlatform()) return;
 
     //     const testPayloads: DevicePayload[] = [
-    //         // Slot 1: DJ Disc calm, Slot 2: Pop It active, Slot 3: Wave Pad calm, Slot 4: empty
+    //         // DJ Disc very slow + Pop It active
     //         { battery: 80, modules: [{ id: 1, state: 0 }, { id: 2, state: 1 }, { id: 3, state: 0 }, { id: 0, state: 0 }] },
-    //         // Slot 1: DJ Disc active, Slot 2: Pop It overstimulated, Slot 3: Wave Pad calm, Slot 4: empty
-    //         { battery: 79, modules: [{ id: 1, state: 1 }, { id: 2, state: 2 }, { id: 3, state: 0 }, { id: 0, state: 0 }] },
-    //         // Slot 1: DJ Disc calm, Slot 2: Pop It selfregulating, Slot 3: Wave Pad active, Slot 4: Bloom Box calm
-    //         { battery: 78, modules: [{ id: 1, state: 0 }, { id: 2, state: 3 }, { id: 3, state: 1 }, { id: 4, state: 0 }] },
-    //         // Slot 1: DJ Disc overstimulated, Slot 2: Pop It calm, Slot 3: Wave Pad calm, Slot 4: Bloom Box active
-    //         { battery: 77, modules: [{ id: 1, state: 2 }, { id: 2, state: 0 }, { id: 3, state: 0 }, { id: 4, state: 1 }] },
-    //         // Slot 1: DJ Disc calm, Slot 2: Pop It active, Slot 3: empty, Slot 4: empty
-    //         { battery: 76, modules: [{ id: 1, state: 0 }, { id: 2, state: 1 }, { id: 0, state: 0 }, { id: 0, state: 0 }] },
-    //         // Slot 1: DJ Disc selfregulating, Slot 2: Pop It calm, Slot 3: Push It active, Slot 4: Tom overstimulated
-    //         { battery: 75, modules: [{ id: 1, state: 3 }, { id: 2, state: 0 }, { id: 5, state: 1 }, { id: 6, state: 2 }] },
+    //         // DJ Disc slow + Wavepad calm
+    //         { battery: 79, modules: [{ id: 1, state: 0 }, { id: 2, state: 2 }, { id: 3, state: 1 }, { id: 0, state: 0 }] },
+    //         // DJ Disc normal + Bloombox calm + George active
+    //         { battery: 78, modules: [{ id: 1, state: 1 }, { id: 4, state: 0 }, { id: 7, state: 1 }, { id: 0, state: 0 }] },
+    //         // DJ Disc fast + Pushit overstimulated + Mabel calm
+    //         { battery: 77, modules: [{ id: 1, state: 2 }, { id: 5, state: 2 }, { id: 8, state: 0 }, { id: 0, state: 0 }] },
+    //         // DJ Disc very fast + Tom selfregulating
+    //         { battery: 76, modules: [{ id: 1, state: 3 }, { id: 6, state: 3 }, { id: 0, state: 0 }, { id: 0, state: 0 }] },
+    //         // DJ Disc max + George + Mabel
+    //         { battery: 75, modules: [{ id: 1, state: 1 }, { id: 7, state: 1 }, { id: 8, state: 2 }, { id: 0, state: 0 }] },
     //     ];
 
-    //     // Module IDs: 0=empty, 1=djdisc, 2=popit, 3=wavepad, 4=bloombox, 5=pushit, 6=tom
+    //     // Module IDs: 0=empty, 1=djdisc, 2=popit, 3=wavepad, 4=bloombox
+    //     //             5=pushit, 6=tom, 7=george, 8=mabel
     //     // Mood codes: 0=calm, 1=active, 2=overstimulated, 3=selfregulating
+    //     // Speed:      0.1=very slow → 1.0=normal → 3.0=very fast (djdisc only)
 
     //     let idx = 0;
     //     setConnected(true);
@@ -112,19 +124,29 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             setConnected(false);
             setSlots(EMPTY_SLOTS);
             setBattery(0);
+            setDjSpeed(1);
             deviceIdRef.current = null;
         };
 
         if (Capacitor.isNativePlatform()) {
             await BleService.connect(id, onDisconnect);
+
             await BleService.startNotify(id, (payload: DevicePayload) => {
                 setBattery(payload.battery);
+
                 const newSlots: SlotEntry[] = payload.modules.map(s => ({
                     moduleId: s.id,
                     module: moduleFromCode(s.id),
                     mood: s.id === 0 ? 'unknown' : moodFromCode(s.state),
                 }));
+
                 setSlots(newSlots);
+
+                const djIndex = payload.modules.findIndex(s => s.id === 1);
+                if (djIndex !== -1 && payload.modules[djIndex].speed !== undefined) {
+                    setDjSpeed(payload.modules[djIndex].speed!);
+                }
+
                 newSlots.forEach(slot => {
                     if (slot.module !== null && slot.mood !== 'unknown') {
                         setHistory(prev => [{
@@ -136,9 +158,11 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                     }
                 });
             });
+
             deviceIdRef.current = id;
             setDeviceId(id);
             setDeviceName(name);
+
         } else {
             const device = await BleService.connect(id, onDisconnect, processPayload);
             deviceIdRef.current = device.id ?? id;
@@ -160,13 +184,14 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setDeviceName(null);
         setSlots(EMPTY_SLOTS);
         setBattery(0);
+        setDjSpeed(1);
         deviceIdRef.current = null;
     }, []);
 
     return (
         <BleContext.Provider value={{
             connected, deviceId, deviceName,
-            slots, battery, history,
+            slots, battery, djSpeed, history,
             connect, disconnect,
         }}>
             {children}
@@ -179,4 +204,6 @@ export const useBle = () => {
     if (!ctx) throw new Error('useBle must be used inside BleProvider');
     return ctx;
 };
+
+
 

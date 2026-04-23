@@ -5,10 +5,11 @@ import {
   IonTabBar, IonTabButton, IonTabs, setupIonicReact
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-import { homeOutline, linkOutline, timeOutline } from 'ionicons/icons';
+import { homeOutline, linkOutline, timeOutline, musicalNotesOutline } from 'ionicons/icons';
 import Tab1 from './pages/Tab1';
 import Tab2 from './pages/Tab2';
 import Tab3 from './pages/Tab3';
+import Tab4 from './pages/Tab4';
 import { BleProvider } from './context/BleContext';
 
 import '@ionic/react/css/core.css';
@@ -35,7 +36,8 @@ const App: React.FC = () => (
             <Route exact path="/tab1"><Tab1 /></Route>
             <Route exact path="/tab2"><Tab2 /></Route>
             <Route exact path="/tab2/:moduleKey"><Tab2 /></Route>
-            <Route exact path="/tab3"><Tab3 /></Route>
+            {/* <Route exact path="/tab3"><Tab3 /></Route> */}
+            <Route exact path="/tab4"><Tab4 /></Route>
             <Route exact path="/"><Redirect to="/tab1" /></Route>
           </IonRouterOutlet>
 
@@ -48,9 +50,13 @@ const App: React.FC = () => (
               <IonIcon icon={linkOutline} />
               <IonLabel>Connect</IonLabel>
             </IonTabButton>
-            <IonTabButton tab="tab3" href="/tab3">
+            {/* <IonTabButton tab="tab3" href="/tab3">
               <IonIcon icon={timeOutline} />
               <IonLabel>History</IonLabel>
+            </IonTabButton> */}
+            <IonTabButton tab="tab4" href="/tab4">
+              <IonIcon icon={musicalNotesOutline} />
+              <IonLabel>Music</IonLabel>
             </IonTabButton>
           </IonTabBar>
         </IonTabs>

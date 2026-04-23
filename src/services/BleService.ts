@@ -6,11 +6,14 @@ export const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
 export const CHAR_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
 
 export type Mood = 'calm' | 'active' | 'overstimulated' | 'selfregulating' | 'unknown';
-export type ModuleType = 'djdisc' | 'popit' | 'wavepad' | 'bloombox' | 'pushit' | 'tom';
+export type ModuleType =
+    'djdisc' | 'popit' | 'wavepad' | 'bloombox' |
+    'pushit' | 'tom' | 'george' | 'mabel';
 
 export interface SlotData {
     id: number;
     state: number;
+    speed?: number;
 }
 
 export interface DevicePayload {
@@ -46,9 +49,9 @@ export function getInsight(mood: Mood): string {
 export function moodFromCode(code: number): Mood {
     switch (code) {
         case 0: return 'calm';
-        case 1: return 'active';
-        case 2: return 'overstimulated';
-        case 3: return 'selfregulating';
+        case 1: return 'selfregulating';
+        case 2: return 'active';
+        case 3: return 'overstimulated';
         default: return 'unknown';
     }
 }
@@ -61,6 +64,8 @@ export function moduleFromCode(code: number): ModuleType | null {
         case 4: return 'bloombox';
         case 5: return 'pushit';
         case 6: return 'tom';
+        case 7: return 'george';
+        case 8: return 'mabel';
         default: return null; // 0 = empty
     }
 }
@@ -79,6 +84,7 @@ let webDevice: any = null;
 let webChar: any = null;
 
 export const BleService = {
+
     async initialize() {
         if (Capacitor.isNativePlatform()) {
             await BleClient.initialize({ androidNeverForLocation: true });
